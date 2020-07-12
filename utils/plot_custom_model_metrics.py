@@ -3,12 +3,7 @@ from matplotlib.gridspec import GridSpec
 import numpy as np
 
 def get_gradual_metric(metric):
-    """
-    Funkcia, ktorá z listu metrík vypočíta priery jednotlivých metrík po každej iterácií.
-    :param metric: množina obsahujúca metriky z celého priebehu
-    :param type_metric: parameter, ktorý nám určuje, ktorú metriku máme vyhodnocovať
-    :return: list priemerných metrík za každú iteráciu procesu
-    """
+
     list_metric = []
     sum_perc = 0
     for i in range(len(metric)):
