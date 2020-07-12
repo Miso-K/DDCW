@@ -1,0 +1,6 @@
+matplotlib
+pandas
+numpy
+liac-arff
+sklearn
+scikit-multiflow==0.5.3
