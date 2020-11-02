@@ -4,7 +4,6 @@ import numpy as np
 from skmultiflow.core import BaseSKMObject, ClassifierMixin, MetaEstimatorMixin
 from skmultiflow.bayes import NaiveBayes
 from skmultiflow.trees import HoeffdingTreeClassifier
-from skmultiflow.lazy import KNNClassifier
 from utils import diversity
 import time
 
@@ -17,7 +16,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
         Minimum number of estimators to hold.
     max_estimators: int (default=20)
         Maximum number of estimatorst to hold.
-    base_estimators: List of StreamModel or sklearn.BaseEstimator (default=[NaiveBayes(), KNNClassifier(), HoeffdingTreeClassifier())
+    base_estimators: List of StreamModel or sklearn.BaseEstimator (default=[NaiveBayes(), HoeffdingTreeClassifier())
         Each member of the ensemble is an instance of the base estimator.
     period: int (default=100)
         Period between expert removal, creation, and weight update.
@@ -59,7 +58,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
             self.lifetime = 0
 
 
-    def __init__(self, min_estimators=5, max_estimators=20, base_estimators=[NaiveBayes(), KNNClassifier(), HoeffdingTreeClassifier()],
+    def __init__(self, min_estimators=5, max_estimators=20, base_estimators=[NaiveBayes(), HoeffdingTreeClassifier()],
                  period=100, alpha=0.02, beta=3, theta=0.02, enable_diversity=True):
         """
         Creates a new instance of DiversifiedDynamicClassWeightedClassifier.
@@ -288,7 +287,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
 
         if self.p == 0:
             # save custom measurements
-            data = {'id_period': self.epochs / self.period, 'n_experts': len(self.experts), 'diversity': np.mean(self.div), 'train_time': (start_time - time.time())}
+            data = {'id_period': self.epochs / self.period, 'n_experts': len(self.experts), 'diversity': np.mean(self.div), 'train_time': (time.time() - start_time)}
             self.custom_measurements.append(data)
 
     def get_expert_predictions(self, X):
@@ -328,6 +327,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
         Removes all experts whose score (sum weights per class) is lower than self.theta.
         """
         self.experts = [ex for ex in self.experts if sum(ex.weight_class) >= self.theta * self.num_classes]
+        #self.experts = [ex for ex in self.experts if sum(ex.weight_class) >= self.theta * (1/self.max_estimators)]
 
 
     def _construct_new_expert(self, ln):
