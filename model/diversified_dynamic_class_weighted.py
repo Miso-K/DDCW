@@ -58,8 +58,8 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
             self.lifetime = 0
 
 
-    def __init__(self, min_estimators=5, max_estimators=20, base_estimators=[NaiveBayes(), HoeffdingTreeClassifier()],
-                 period=100, alpha=0.02, beta=3, theta=0.02, enable_diversity=True):
+    def __init__(self, min_estimators=5, max_estimators=50, base_estimators=[NaiveBayes(), HoeffdingTreeClassifier()],
+                 period=1000, alpha=0.002, beta=1.5, theta=0.001, enable_diversity=True):
         """
         Creates a new instance of DiversifiedDynamicClassWeightedClassifier.
         """
@@ -250,7 +250,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
                 if len(self.div) > 0 and self.enable_diversity:
                     exp.weight_class = exp.weight_class * (1 - self.div[i])
 
-                exp.weight_class[exp.weight_class <= 0] = 0.001
+                exp.weight_class[exp.weight_class <= 0] = 0.0001
 
                 for j in range(len(exp.weight_class)):
                     sum_weight_class[j] += exp.weight_class[j]
@@ -281,9 +281,12 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
                 new_exp = self._construct_new_expert(len(self.experts))
                 self.experts.append(new_exp)
 
-
         for exp in self.experts:
-            exp.estimator = self.train_model(cp.copy(exp.estimator), X, y, classes, sample_weight)
+            r = []
+            k = np.random.randint(100)
+            r.append(k)
+            if k == 0: r = None
+            exp.estimator = self.train_model(cp.copy(exp.estimator), X, y, classes, r)
 
         if self.p == 0:
             # save custom measurements
