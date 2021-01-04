@@ -58,8 +58,8 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
             self.lifetime = 0
 
 
-    def __init__(self, min_estimators=5, max_estimators=50, base_estimators=[NaiveBayes(), HoeffdingTreeClassifier()],
-                 period=1000, alpha=0.002, beta=1.5, theta=0.001, enable_diversity=True):
+    def __init__(self, min_estimators=5, max_estimators=20, base_estimators=[NaiveBayes(), HoeffdingTreeClassifier()],
+                 period=1000, alpha=0.02, beta=3, theta=0.02, enable_diversity=True):
         """
         Creates a new instance of DiversifiedDynamicClassWeightedClassifier.
         """
@@ -147,11 +147,11 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
             A numpy.ndarray with the label prediction for all the samples in X.
         """
         predictions_class = np.zeros((len(X), self.num_classes))
-
         for exp in self.experts:
-            Y_hat = exp.estimator.predict(X)
-            for i, y_hat in enumerate(Y_hat):
-                predictions_class[i][y_hat] += exp.weight_class[y_hat]
+            if exp.lifetime > 0:
+                Y_hat = exp.estimator.predict(X)
+                for i, y_hat in enumerate(Y_hat):
+                    predictions_class[i][y_hat] += exp.weight_class[y_hat]
         y_hat_final = np.argmax(predictions_class, axis=1)
         return y_hat_final
 
@@ -282,15 +282,16 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
                 self.experts.append(new_exp)
 
         for exp in self.experts:
-            r = []
-            k = np.random.randint(100)
-            r.append(k)
-            if k == 0: r = None
-            exp.estimator = self.train_model(cp.copy(exp.estimator), X, y, classes, r)
+            random_weights = []
+            random_weight = np.random.randint(len(self.experts))
+            random_weights.append(random_weight)
+            if random_weight == 0: random_weights = None
+            exp.estimator = self.train_model(exp.estimator, X, y, classes, random_weights)
 
         if self.p == 0:
             # save custom measurements
-            data = {'id_period': self.epochs / self.period, 'n_experts': len(self.experts), 'diversity': np.mean(self.div), 'train_time': (time.time() - start_time)}
+            diversity_value = np.mean(self.div) if len(self.div) > 0 else 0
+            data = {'id_period': self.epochs / self.period, 'n_experts': len(self.experts), 'diversity': diversity_value, 'train_time': (time.time() - start_time)}
             self.custom_measurements.append(data)
 
     def get_expert_predictions(self, X):
@@ -306,9 +307,9 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
         """
         self.epochs = 0
         self.num_classes = 2    # Minimum of 2 classes
-        self.experts = [
-            self._construct_new_expert(1)
-        ]
+        self.experts = []
+        for i in range(self.min_estimators):
+            self.experts.append(self._construct_new_expert(self.min_estimators))
 
     def _normalize_weights_class(self, sum_weight_class):
         """
@@ -330,8 +331,6 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
         Removes all experts whose score (sum weights per class) is lower than self.theta.
         """
         self.experts = [ex for ex in self.experts if sum(ex.weight_class) >= self.theta * self.num_classes]
-        #self.experts = [ex for ex in self.experts if sum(ex.weight_class) >= self.theta * (1/self.max_estimators)]
-
 
     def _construct_new_expert(self, ln):
         """
