@@ -283,7 +283,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
 
         for exp in self.experts:
             random_weights = []
-            random_weight = np.random.randint(len(self.experts))
+            random_weight = np.random.randint(100)
             random_weights.append(random_weight)
             if random_weight == 0: random_weights = None
             exp.estimator = self.train_model(exp.estimator, X, y, classes, random_weights)
