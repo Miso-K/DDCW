@@ -126,7 +126,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
             self.fit_single_sample(
                 X[i:i+1, :], y[i:i+1], classes, sample_weight
             )
-            self.custom_time.append(time.time() - start_time)
+ 
         return self
 
     def predict(self, X):
@@ -187,7 +187,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
 
         """
 
-        start_time = time.time()
+        
 
         if self.p <= 0:
             for exp in self.experts:
@@ -283,7 +283,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
 
         for exp in self.experts:
             random_weights = []
-            random_weight = np.random.randint(100)
+            random_weight = np.random.randint(len(self.experts))
             random_weights.append(random_weight)
             if random_weight == 0: random_weights = None
             exp.estimator = self.train_model(exp.estimator, X, y, classes, random_weights)
