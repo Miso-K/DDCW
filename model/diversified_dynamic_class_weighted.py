@@ -59,7 +59,7 @@ class DiversifiedDynamicClassWeightedClassifier(BaseSKMObject, ClassifierMixin, 
 
 
     def __init__(self, min_estimators=5, max_estimators=20, base_estimators=[NaiveBayes(), HoeffdingTreeClassifier()],
-                 period=1000, alpha=0.02, beta=3, theta=0.02, enable_diversity=True):
+                 period=1000, alpha=0.002, beta=1.5, theta=0.05, enable_diversity=True):
         """
         Creates a new instance of DiversifiedDynamicClassWeightedClassifier.
         """
